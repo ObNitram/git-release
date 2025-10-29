@@ -2,7 +2,7 @@
 
 Minimal tool to create and publish Git release tags following the vX.Y.Z format.
 
-Usage
+## Usage
 - From the repository root: `./git-release`
 - The script creates an annotated tag and pushes it to the configured remote.
 - If the script is in your PATH, you can run it directly with `git release`
@@ -31,13 +31,14 @@ $ git release
     ✅ Release v0.1.0 created and pushed successfully!
 ```
 
-Installation
+## Installation
 - Make the script executable: `chmod +x git-release`
-- (Optional) Copy to PATH: `cp git-release $HOME/.local/bin/git-release`
+- (Optional) Create a hard link in your PATH : 
+   `ln "$(pwd)/git-release" "$HOME/.local/bin/git-release"`
 
 
-Dependencies
+## Dependencies
 - git
 
-License
+## License
 - See the repository `LICENSE` file.
