@@ -1,6 +1,7 @@
 # git-release
 
-Minimal tool to create and publish a Git release (tag + push) from a local repo.
+Minimal tool to create and publish Git release tags following the vX.Y.Z format.
+
 
 Installation
 - Make the script executable: `chmod +x git-release`
