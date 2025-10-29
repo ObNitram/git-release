@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+# git-release
+# -------------------------------------------------
+# Only accepts tags of the form vX.Y.Z (no prerelease/build).
+# Interactively bumps patch/minor/major, creates an annotated tag,
+# and pushes it to origin.
+#
+# Requirements:
+# - The last tag MUST match ^v[0-9]+\.[0-9]+\.[0-9]+$ (or none => starts from v0.0.0)
+# - Working tree must be clean.
+
+set -euo pipefail
+trap 'echo "❌ ${0##*/} failed at line $LINENO." >&2; exit 1' ERR
+
+# --- Safety: ensure we are inside a Git repository ---
+git rev-parse --is-inside-work-tree >/dev/null 2>&1
+
+# --- Safety: require a clean working tree ---
+if ! git diff-index --quiet HEAD --; then
+    echo "⚠️  Uncommitted changes detected. Please commit or stash before releasing."
+    exit 1
+fi
+
+# --- Get strictly matching tags and pick the highest (lexicographic by version) ---
+# Using Git's glob to only list vX.Y.Z, then version-sort.
+LAST_TAG=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' | sort -V | tail -n1)
+CURRENT_TAG=${LAST_TAG:-v0.0.0}
+
+# --- Validate strict format (vX.Y.Z only) ---
+if [[ ! "$CURRENT_TAG" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+    echo "❌ Latest tag '$CURRENT_TAG' is not strictly 'vX.Y.Z'."
+    echo "   Please create a proper base tag, e.g.: git tag -a v0.0.0 -m 'init'"
+    exit 1
+fi
+
+# --- Parse numbers (strict) ---
+MAJOR=${BASH_REMATCH[1]}
+MINOR=${BASH_REMATCH[2]}
+PATCH=${BASH_REMATCH[3]}
+
+echo "📦 Current version: $CURRENT_TAG"
+echo "Select release type:"
+select TYPE in "patch" "minor" "major" "cancel"; do
+    case "$TYPE" in
+        patch) PATCH=$((PATCH + 1)); break ;;
+        minor) MINOR=$((MINOR + 1)); PATCH=0; break ;;
+        major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0; break ;;
+        cancel) echo "❌ Release cancelled."; exit 0 ;;
+        *) echo "Invalid selection. Please choose 1, 2, 3, or 4." ;;
+    esac
+done
+
+# --- Build next tag (still strict vX.Y.Z) ---
+NEXT_TAG="v${MAJOR}.${MINOR}.${PATCH}"
+
+# --- Double-check strictness before proceeding ---
+if [[ ! "$NEXT_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    echo "❌ Computed tag '$NEXT_TAG' is not strictly 'vX.Y.Z'. Aborting."
+    exit 1
+fi
+
+# --- Refuse to overwrite (local & remote) ---
+if git rev-parse -q --verify "refs/tags/$NEXT_TAG" >/dev/null; then
+    echo "❌ Local tag $NEXT_TAG already exists. Aborting."
+    exit 1
+fi
+if git ls-remote --tags origin "refs/tags/$NEXT_TAG" | grep -q .; then
+    echo "❌ Remote tag $NEXT_TAG already exists on origin. Aborting."
+    exit 1
+fi
+
+echo "🚀 Creating new release: $NEXT_TAG"
+read -r -p "Confirm? (y/N): " CONFIRM
+if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
+    echo "❌ Release cancelled."
+    exit 0
+fi
+
+# --- Create and push the annotated tag ---
+git tag -a "$NEXT_TAG" -m "Release $NEXT_TAG"
+git push origin "$NEXT_TAG"
+
+echo "✅ Release $NEXT_TAG created and pushed successfully!"
