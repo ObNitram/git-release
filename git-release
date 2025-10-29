@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # git-release
+# https://github.com/obnitram/git-release
 # -------------------------------------------------
 # Only accepts tags of the form vX.Y.Z (no prerelease/build).
 # Interactively bumps patch/minor/major, creates an annotated tag,
