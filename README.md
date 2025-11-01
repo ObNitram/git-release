@@ -3,11 +3,20 @@
 Minimal tool to create and publish Git release tags following the vX.Y.Z format.
 
 ## Usage
-- From the repository root: `./git-release`
-- The script creates an annotated tag and pushes it to the configured remote.
-- If the script is in your PATH, you can run it directly with `git release`
+
+**Single project (default):**
+- From the repository root: `./git-release` or `git release`
+- Creates tags in the format `vX.Y.Z`
+
+**Multi-project:**
+- From the repository root: `./git-release <projectname>` or `git release <projectname>`
+- Creates tags in the format `<projectname>-vX.Y.Z`
+- Useful for monorepos with multiple independent release cycles
+
+The script creates an annotated tag and pushes it to the configured remote.
 
 
+## Example
 ```
 $ git release 
     📦 Current version: v0.0.0

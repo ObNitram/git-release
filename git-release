@@ -2,16 +2,31 @@
 # git-release
 # https://github.com/obnitram/git-release
 # -------------------------------------------------
-# Only accepts tags of the form vX.Y.Z (no prerelease/build).
+# Usage: git-release [<projectname>]
+# Accepts tags of the form vX.Y.Z or <projectname>-vX.Y.Z (no prerelease/build).
 # Interactively bumps patch/minor/major, creates an annotated tag,
 # and pushes it to origin.
 #
 # Requirements:
-# - The last tag MUST match ^v[0-9]+\.[0-9]+\.[0-9]+$ (or none => starts from v0.0.0)
+# - The last tag MUST match ^v[0-9]+\.[0-9]+\.[0-9]+$ or ^<projectname>-v[0-9]+\.[0-9]+\.[0-9]+$ (or none => starts from v0.0.0)
 # - Working tree must be clean.
 
 set -euo pipefail
 trap 'echo "❌ ${0##*/} failed at line $LINENO." >&2; exit 1' ERR
+
+# --- Parse optional project name argument ---
+PROJECT_NAME="${1:-}"
+if [[ -n "$PROJECT_NAME" ]]; then
+    TAG_PREFIX="${PROJECT_NAME}-v"
+    TAG_PATTERN="${PROJECT_NAME}-v[0-9]*.[0-9]*.[0-9]*"
+    TAG_REGEX="^${PROJECT_NAME}-v([0-9]+)\.([0-9]+)\.([0-9]+)$"
+    DEFAULT_TAG="${PROJECT_NAME}-v0.0.0"
+else
+    TAG_PREFIX="v"
+    TAG_PATTERN="v[0-9]*.[0-9]*.[0-9]*"
+    TAG_REGEX="^v([0-9]+)\.([0-9]+)\.([0-9]+)$"
+    DEFAULT_TAG="v0.0.0"
+fi
 
 # --- Safety: ensure we are inside a Git repository ---
 git rev-parse --is-inside-work-tree >/dev/null 2>&1
@@ -23,14 +38,18 @@ if ! git diff-index --quiet HEAD --; then
 fi
 
 # --- Get strictly matching tags and pick the highest (lexicographic by version) ---
-# Using Git's glob to only list vX.Y.Z, then version-sort.
-LAST_TAG=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' | sort -V | tail -n1)
-CURRENT_TAG=${LAST_TAG:-v0.0.0}
+# Using Git's glob to only list matching pattern, then version-sort.
+LAST_TAG=$(git tag --list "$TAG_PATTERN" | sort -V | tail -n1)
+CURRENT_TAG=${LAST_TAG:-$DEFAULT_TAG}
 
-# --- Validate strict format (vX.Y.Z only) ---
-if [[ ! "$CURRENT_TAG" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
-    echo "❌ Latest tag '$CURRENT_TAG' is not strictly 'vX.Y.Z'."
-    echo "   Please create a proper base tag, e.g.: git tag -a v0.0.0 -m 'init'"
+# --- Validate strict format ---
+if [[ ! "$CURRENT_TAG" =~ $TAG_REGEX ]]; then
+    echo "❌ Latest tag '$CURRENT_TAG' does not match expected format."
+    if [[ -n "$PROJECT_NAME" ]]; then
+        echo "   Please create a proper base tag, e.g.: git tag -a ${PROJECT_NAME}-v0.0.0 -m 'init'"
+    else
+        echo "   Please create a proper base tag, e.g.: git tag -a v0.0.0 -m 'init'"
+    fi
     exit 1
 fi
 
@@ -51,12 +70,12 @@ select TYPE in "patch" "minor" "major" "cancel"; do
     esac
 done
 
-# --- Build next tag (still strict vX.Y.Z) ---
-NEXT_TAG="v${MAJOR}.${MINOR}.${PATCH}"
+# --- Build next tag ---
+NEXT_TAG="${TAG_PREFIX}${MAJOR}.${MINOR}.${PATCH}"
 
 # --- Double-check strictness before proceeding ---
-if [[ ! "$NEXT_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-    echo "❌ Computed tag '$NEXT_TAG' is not strictly 'vX.Y.Z'. Aborting."
+if [[ ! "$NEXT_TAG" =~ $TAG_REGEX ]]; then
+    echo "❌ Computed tag '$NEXT_TAG' does not match expected format. Aborting."
     exit 1
 fi
 
