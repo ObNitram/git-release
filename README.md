@@ -2,19 +2,24 @@
 
 Minimal tool to create and publish Git release tags following the vX.Y.Z format.
 
+```bash
+# Quick install
+mkdir -p ${HOME}/.local/bin
+wget -qO ${HOME}/.local/bin/git-release https://github.com/ObNitram/git-release/releases/latest/download/git-release
+chmod +x ${HOME}/.local/bin/git-release
+```
+
 ## Usage
 
-**Single project (default):**
-- From the repository root: `./git-release` or `git release`
-- Creates tags in the format `vX.Y.Z`
+- From the repository root: `git release`
+- Select release type: patch, minor, major, or cancel
+- Confirm the new version
+- The script creates and pushes the new tag
 
-**Multi-project:**
-- From the repository root: `./git-release <projectname>` or `git release <projectname>`
-- Creates tags in the format `<projectname>-vX.Y.Z`
-- Useful for monorepos with multiple independent release cycles
+### Multi-project support
 
-The script creates an annotated tag and pushes it to the configured remote.
-
+For repositories with multiple projects (monorepos), you can specify the project name as an argument:
+`git release <projectname>` will create a tag with the following format `<projectname>-vX.Y.Z`
 
 ## Example
 ```
@@ -41,13 +46,27 @@ $ git release
 ```
 
 ## Installation
-- Make the script executable: `chmod +x git-release`
-- (Optional) Create a hard link in your PATH : 
-   `ln "$(pwd)/git-release" "$HOME/.local/bin/git-release"`
+It's a single script file:
+- Download the `git-release` script from the repository.
+- Make it executable: `chmod +x git-release`
+- Place it in your PATH
+
+It relies on the fact that if git does not find a command, it will look for a script named `git-<command>` in your PATH.
+So you can now run `git release` from any git repository.
+
+
+You can use the following commands to install it:
+```bash
+mkdir -p ${HOME}/.local/bin
+wget -qO ${HOME}/.local/bin/git-release https://github.com/ObNitram/git-release/releases/latest/download/git-release
+chmod +x ${HOME}/.local/bin/git-release
+```
+
 
 
 ## Dependencies
 - git
 
 ## License
+- MIT License
 - See the repository `LICENSE` file.
