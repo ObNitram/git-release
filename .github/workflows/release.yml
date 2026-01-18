@@ -1,0 +1,39 @@
+name: Release
+
+on:
+    push:
+        tags:
+            - "v[0-9]+.[0-9]+.[0-9]+"
+
+permissions:
+    contents: write
+
+jobs:
+    release:
+        name: Create Release
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v5
+
+            - name: Extract version from tag
+              id: version
+              run: echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+            - name: Create Release
+              uses: softprops/action-gh-release@v2
+              with:
+                  name: Release ${{ steps.version.outputs.version }}
+                  body: |
+                      ## git-release ${{ steps.version.outputs.version }}
+
+                      Minimal tool to create and publish Git release tags following the vX.Y.Z format.
+
+                      See the [README](https://github.com/${{ github.repository }}/blob/${{ steps.version.outputs.version }}/README.md) for more details.
+                  files: |
+                      git-release
+                      LICENSE
+                      README.md
+                  draft: false
+                  prerelease: false
