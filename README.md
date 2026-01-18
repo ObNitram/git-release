@@ -62,8 +62,6 @@ wget -qO ${HOME}/.local/bin/git-release https://github.com/ObNitram/git-release/
 chmod +x ${HOME}/.local/bin/git-release
 ```
 
-
-
 ## Dependencies
 - git
 
