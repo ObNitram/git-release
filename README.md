@@ -2,8 +2,8 @@
 
 Minimal tool to create and publish Git release tags following the vX.Y.Z format.
 
+## Quick install
 ```bash
-# Quick install
 mkdir -p ${HOME}/.local/bin
 wget -qO ${HOME}/.local/bin/git-release https://github.com/ObNitram/git-release/releases/latest/download/git-release
 chmod +x ${HOME}/.local/bin/git-release
